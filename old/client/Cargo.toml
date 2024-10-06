@@ -1,0 +1,38 @@
+[package]
+name = "voxel-rs-client"
+version = "0.1.0"
+authors = ["Technici4n", "Azercoco"]
+edition = "2018"
+
+[[bin]]
+name = "voxel_rs_client"
+path = "./src/main.rs"
+
+[dependencies]
+# Voxel-rs
+voxel-rs-common = { path = "../common" }
+voxel-rs-server = { path = "../server" }
+
+# Utilities
+anyhow = "1.0"
+env_logger = "0.11.5"
+log = "0.4"
+ron = "0.8.1"
+serde = "1.0"
+toml = "0.8.19"
+futures = "0.3"
+crossbeam-channel = "0.5"
+
+# Graphics
+shaderc = "0.8.3"
+image = "0.25.2"
+texture_packer = "0.29.0"
+wgpu = "22.1.0"
+wgpu-types = "22.0.0"
+winit = "0.30.5"
+
+# Gui
+quint = { path = "../quint" }
+
+# Math
+nalgebra = "0.33.0"

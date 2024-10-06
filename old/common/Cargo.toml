@@ -1,0 +1,21 @@
+[package]
+name = "voxel-rs-common"
+version = "0.1.0"
+authors = ["Technici4n", "Azercoco"]
+edition = "2018"
+
+[dependencies]
+# Utilities
+anyhow = "1.0"
+crossbeam-channel = "0.5"
+lazy_static = "1.4.0"
+log = "0.4"
+ron = "0.8.1"
+serde = { version = "1.0", features = ["derive"] }
+
+# Image loading
+image = "0.25.2"
+texture_packer = "0.29.0"
+
+# Math
+nalgebra = "0.33.0"
