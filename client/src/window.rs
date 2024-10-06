@@ -1,54 +1,47 @@
-use crate::{input::InputState, settings::Settings};
-use anyhow::Result;
-use log::{info, warn};
 use std::time::Instant;
-use wgpu::Device;
+use wgpu::{Device, TextureView, Surface, SurfaceConfiguration};
+use anyhow::Result;
 use futures::executor::block_on;
+use log::{info, warn};
+use texture_packer::texture::Texture;
+use wgpu_types::{TextureFormat, TextureUsages};
 use winit::dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize};
 use winit::event::{ElementState, MouseButton};
-use winit::event_loop::ControlFlow;
-use winit::window::Window;
-
-/// A closure that creates a new instance of `State`.
+use winit::event::WindowEvent::RedrawRequested;
+use winit::event_loop;
+use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::keyboard::KeyCode;
+use winit::platform::scancode::PhysicalKeyExtScancode;
+use winit::window::{CursorGrabMode, Window};
+use crate::{
+    input::InputState,
+    settings::Settings
+};
 pub type StateFactory =
     Box<dyn FnOnce(&mut Settings, &mut Device) -> Result<(Box<dyn State>, wgpu::CommandBuffer)>>;
 
-/// A transition from one state to another.
 pub enum StateTransition {
-    /// Don't transition, keep the current state.
     KeepCurrent,
-    /// Transition to another state using its `StateFactory`.
-    #[allow(dead_code)] // TODO: remove when it will be used again
+    #[allow(dead_code)]
     ReplaceCurrent(StateFactory),
-    /// Don't transition, close the current window.
     CloseWindow,
 }
 
-/// Read-only data that is provided to the states.
 #[derive(Debug, Clone)]
 pub struct WindowData {
-    /// Logical size of the window. See [the winit documentation](winit::dpi).
     pub logical_window_size: LogicalSize<f64>,
-    /// Physical size of the window.
     pub physical_window_size: PhysicalSize<u32>,
-    /// HiDpi factor of the window.
     pub hidpi_factor: f64,
-    /// `true` if the window is currently focused
     pub focused: bool,
 }
 
-/// Read-write data of the window that the states can modify.
 #[derive(Debug, Clone)]
 pub struct WindowFlags {
-    /// `true` if the cursor should be hidden and centered.
     pub grab_cursor: bool,
-    /// Window title
     pub window_title: String,
 }
 
-/// A window state. It has full control over the rendered content.
-pub trait State {
-    /// Update using the given time delta.
+pub trait State{
     fn update(
         &mut self,
         settings: &mut Settings,
@@ -58,9 +51,7 @@ pub trait State {
         seconds_delta: f64,
         device: &mut Device,
     ) -> Result<StateTransition>;
-    /// Render.
-    ///
-    /// Note: The state is responsible for swapping buffers.
+
     fn render<'a>(
         &mut self,
         settings: &Settings,
@@ -69,71 +60,60 @@ pub trait State {
         data: &WindowData,
         input_state: &InputState,
     ) -> Result<(StateTransition, wgpu::CommandBuffer)>;
-    /// Mouse motion
-    fn handle_mouse_motion(&mut self, settings: &Settings, delta: (f64, f64));
-    /// Cursor moved
+
+    fn handle_mouse_motion(&mut self, settings: Settings, delta: (f64, f64));
     fn handle_cursor_movement(&mut self, logical_position: LogicalPosition<f64>);
-    /// Mouse clicked
     fn handle_mouse_state_changes(&mut self, changes: Vec<(MouseButton, ElementState)>);
-    /// Key pressed
-    fn handle_key_state_changes(&mut self, changes: Vec<(u32, ElementState)>);
+    fn handle_key_state_changes(&mut self, changes: Vec<(Option<u32>, ElementState)>);
 }
 
-/// Color format of the window's color buffer
-pub const COLOR_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Bgra8Unorm;
-/// Format of the window's depth buffer
+pub const COLOR_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Bgra8UnormSrgb;
 pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 
-/// Open a new window with the given settings and the given initial state
 pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
-    info!("Opening new window...");
-    // Create the window
-    let window_title = "voxel-rs".to_owned();
-    let event_loop = winit::event_loop::EventLoop::new();
-    let window = Window::new(&event_loop).expect("Failed to create window");
-    window.set_title(&window_title);
-    // Create the Surface, i.e. the render target of the program
+    info!("Opening window");
+    let window_title = "MarsRobots".to_owned();
+    let event_loop = EventLoop::new().unwrap();
+    let window_attributes = Window::default_attributes().with_title(window_title);
+    let window = event_loop.create_window(window_attributes).unwrap();
     let hidpi_factor = window.scale_factor();
-    let physical_window_size = window.inner_size();
+    window.inner_size();
     info!("Creating the swap chain");
-    let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
-    let surface = unsafe { instance.create_surface(&window) };
-    // Get the Device and the render Queue
+    let instance = wgpu::Instance::default();
+    let surface = instance.create_surface(&window).unwrap();
+    //Get the Device and the render Queue
     let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
-        power_preference: wgpu::PowerPreference::HighPerformance, // TODO: configure this?
+        power_preference: wgpu::PowerPreference::HighPerformance, //TODO: Configurable ?
+        force_fallback_adapter: false,
         compatible_surface: Some(&surface),
     }))
-    .expect("Failed to create adapter");
-    // TODO: device should be immutable
+        .expect("No such adapter");
     let (mut device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor {
-        features: wgpu::Features::empty(),
-        limits: wgpu::Limits::default(),
-        shader_validation: true
+        label: None,
+        required_features: wgpu::Features::empty(),
+        required_limits: wgpu::Limits::default(),
+        memory_hints: Default::default(),
     }, None))
-    .expect("Failed to request device");
-    // Create the SwapChain
-    let mut sc_desc = wgpu::SwapChainDescriptor {
-        usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
-        format: COLOR_FORMAT,
-        width: physical_window_size.width,
-        height: physical_window_size.height,
-        present_mode: wgpu::PresentMode::Mailbox,
-    };
-    let mut swap_chain = device.create_swap_chain(&surface, &sc_desc);
+        .expect("Unable to create device");
+
+
+    let swap_chain_capabilities = surface.get_capabilities(&adapter);
+    let swapchain_format = swap_chain_capabilities.formats[0];
     info!("Creating the multisampled texture buffer");
     let texture_view_descriptor = wgpu::TextureViewDescriptor::default();
     let mut msaa_texture_descriptor = wgpu::TextureDescriptor {
         label: None,
         size: wgpu::Extent3d {
-            width: sc_desc.width,
-            height: sc_desc.height,
-            depth: 1,
+            width: surface.width(),
+            height: surface.height(),
+            depth_or_array_layers: 0,
         },
         mip_level_count: 1,
         sample_count: SAMPLE_COUNT,
         dimension: wgpu::TextureDimension::D2,
-        format: sc_desc.format,
-        usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
+        format: DEPTH_FORMAT,
+        usage: wgpu::TextureUsages::empty(),
+        view_formats: &[],
     };
     let mut msaa_texture = device.create_texture(&msaa_texture_descriptor);
     let mut msaa_texture_view = msaa_texture.create_view(&texture_view_descriptor);
@@ -141,15 +121,16 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
     let mut depth_texture_descriptor = wgpu::TextureDescriptor {
         label: None,
         size: wgpu::Extent3d {
-            width: sc_desc.width,
-            height: sc_desc.height,
-            depth: 1,
+            width: swapchain_format.block_dimensions().0,
+            height: swapchain_format.block_dimensions().1,
+            depth_or_array_layers: 0,
         },
         mip_level_count: 1,
         sample_count: SAMPLE_COUNT,
         dimension: wgpu::TextureDimension::D2,
         format: DEPTH_FORMAT,
-        usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
+        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        view_formats: Default::default(),
     };
     let mut depth_texture = device.create_texture(&depth_texture_descriptor);
     let mut depth_texture_view = depth_texture.create_view(&texture_view_descriptor);
@@ -165,12 +146,11 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
             focused: false,
         }
     };
-
     let mut input_state = InputState::new();
 
     let mut window_flags = WindowFlags {
         grab_cursor: false,
-        window_title,
+        window_title: window_title.clone(),
     };
 
     info!("Done initializing the window. Moving on to the first state...");
@@ -186,7 +166,7 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
     let mut key_state_changes = Vec::new();
 
     // Main loop
-    event_loop.run(move |event, _, control_flow| {
+    event_loop.run_app(&mut move |event, _, control_flow| {
         use winit::event::Event::*;
         match event {
             /* NORMAL EVENT HANDLING */
@@ -195,16 +175,16 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
                 match event {
                     Resized(_) | ScaleFactorChanged { .. } => window_resized = true,
                     Moved(_) => (),
-                    CloseRequested | Destroyed => *control_flow = ControlFlow::Exit,
+                    CloseRequested | Destroyed => *control_flow = ControlFlow::Wait,
                     DroppedFile(_) | HoveredFile(_) | HoveredFileCancelled => (),
-                    ReceivedCharacter(_) => (),
                     Focused(focused) => {
                         window_data.focused = focused;
                         input_state.clear();
                     }
-                    KeyboardInput { input, .. } => {
-                        if input_state.process_keyboard_input(input) {
-                            key_state_changes.push((input.scancode, input.state));
+                    KeyboardInput { event, .. } => {
+                        let input = event;
+                        if input_state.process_keyboard_input(input.clone()) {
+                            key_state_changes.push((input.physical_key.to_scancode(), input.state));
                         }
                     }
                     CursorMoved { position, .. } => state.handle_cursor_movement(position.to_logical(hidpi_factor)),
@@ -214,13 +194,13 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
                         state: element_state,
                         ..
                     } => {
-                        if input_state.process_mouse_input(element_state, button) {
+                        if input_state.process_mouse_input(button, element_state) {
                             mouse_state_changes.push((button, element_state));
                         }
                     }
                     // weird events
                     TouchpadPressure { .. } | AxisMotion { .. } | Touch(..) | ThemeChanged(_) => (),
-                    ModifiersChanged(modifiers_state) => input_state.set_modifiers_state(modifiers_state),
+                    ModifiersChanged(modifiers_state) => input_state.set_modifiers_state(modifiers_state.state()),
                 }
             },
             DeviceEvent { event, .. } => {
@@ -229,12 +209,12 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
                 }
                 use winit::event::DeviceEvent::*;
                 match event {
-                    MouseMotion { delta } => state.handle_mouse_motion(&settings, delta),
+                    MouseMotion { delta } => state.handle_mouse_motion(settings, delta),
                     _ => (),
                 }
             }
             /* MAIN LOOP TICK */
-            MainEventsCleared => {
+            _MainEventsCleared => {
                 // If the window was resized, update the SwapChain and the window data
                 if window_resized {
                     info!("The window was resized, adjusting buffers...");
@@ -243,18 +223,27 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
                     window_data.hidpi_factor = window.scale_factor();
                     window_data.logical_window_size = window_data.physical_window_size.to_logical(window_data.hidpi_factor);
                     // Update SwapChain
-                    sc_desc.width = window_data.physical_window_size.width;
-                    sc_desc.height = window_data.physical_window_size.height;
-                    swap_chain = device.create_swap_chain(&surface, &sc_desc);
+                    let config = SurfaceConfiguration {
+                        usage: TextureUsages::RENDER_ATTACHMENT,
+                        format: TextureFormat::R8Unorm,
+                        width: window_data.physical_window_size.width,
+                        height: window_data.physical_window_size.height,
+                        present_mode: Default::default(),
+                        desired_maximum_frame_latency: 0,
+                        alpha_mode: Default::default(),
+                        view_formats: Default::default(),
+                    };
+                    surface.configure(&device, &config);
+
                     // TODO: remove copy/paste
                     // Update depth buffer
-                    depth_texture_descriptor.size.width = sc_desc.width;
-                    depth_texture_descriptor.size.height = sc_desc.height;
+                    depth_texture_descriptor.size.width = config.width;
+                    depth_texture_descriptor.size.height = config.height;
                     depth_texture = device.create_texture(&depth_texture_descriptor);
                     depth_texture_view = depth_texture.create_view(&texture_view_descriptor);
                     // Udate MSAA frame buffer
-                    msaa_texture_descriptor.size.width = sc_desc.width;
-                    msaa_texture_descriptor.size.height = sc_desc.height;
+                    msaa_texture_descriptor.size.width = config.width;
+                    msaa_texture_descriptor.size.height = config.height;
                     msaa_texture = device.create_texture(&msaa_texture_descriptor);
                     msaa_texture_view = msaa_texture.create_view(&texture_view_descriptor);
                 }
@@ -286,8 +275,8 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
                 if window_flags.grab_cursor && window_data.focused {
                     window.set_cursor_visible(false);
                     let PhysicalSize { width, height } = window_data.physical_window_size;
-                    let center_pos = PhysicalPosition { x : width / 2, y : height / 2 };
-                    match window.set_cursor_grab(true) {
+                    let center_pos = PhysicalPosition { x: width / 2, y: height / 2 };
+                    match window.set_cursor_grab(CursorGrabMode::Locked) {
                         Err(err) => warn!("Failed to grab cursor ({:?})", err),
                         _ => (),
                     }
@@ -297,7 +286,7 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
                     }
                 } else {
                     window.set_cursor_visible(true);
-                    match window.set_cursor_grab(false) {
+                    match window.set_cursor_grab(CursorGrabMode::None) {
                         Err(err) => warn!("Failed to ungrab cursor ({:?})", err),
                         _ => (),
                     }
@@ -315,17 +304,17 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
                         return;
                     }
                     StateTransition::CloseWindow => {
-                        *control_flow = ControlFlow::Exit;
+                        *control_flow = ControlFlow::Wait;
                     }
                 }
 
                 // Render frame
-                let swap_chain_output = swap_chain.get_current_frame().expect("Failed to unwrap swap chain output.");
+                let swap_chain_output = surface.get_current_texture().expect("Failed to unwrap swap chain output.");
                 let (state_transition, commands) = state
                     .render(
                         &settings,
                         WindowBuffers {
-                            texture_buffer: &swap_chain_output.output.view,
+                            texture_buffer: &swap_chain_output.texture.create_view(&Default::default()),
                             multisampled_texture_buffer: &msaa_texture_view,
                             depth_buffer: &depth_texture_view,
                         },
@@ -344,17 +333,17 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
                         queue.submit(vec![cmd]);
                     }
                     StateTransition::CloseWindow => {
-                        *control_flow = ControlFlow::Exit;
+                        *control_flow = ControlFlow::Wait;
                     }
                 }
             }
-            RedrawRequested(_) => (), // TODO: handle this
+            RedrawRequested() => (), // TODO: handle this
             LoopDestroyed => {
                 // TODO: cleanup relevant stuff
             }
             _ => (),
         }
-    });
+    }).expect("TODO: panic message")
 }
 
 pub const CLEAR_COLOR: wgpu::Color = wgpu::Color {
@@ -363,12 +352,14 @@ pub const CLEAR_COLOR: wgpu::Color = wgpu::Color {
     b: 0.2,
     a: 1.0,
 };
+
 pub const CLEAR_DEPTH: f32 = 1.0;
-pub const SAMPLE_COUNT: u32 = 4;
+pub  const SAMPLE_COUNT: u32 = 4;
+
 
 #[derive(Debug, Clone, Copy)]
 pub struct WindowBuffers<'a> {
-    pub texture_buffer: &'a wgpu::TextureView,
-    pub multisampled_texture_buffer: &'a wgpu::TextureView,
-    pub depth_buffer: &'a wgpu::TextureView,
+    pub texture_buffer: &'a TextureView,
+    pub multisampled_texture_buffer: &'a TextureView,
+    pub depth_buffer: &'a TextureView,
 }

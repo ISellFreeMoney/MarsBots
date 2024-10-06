@@ -10,30 +10,29 @@ path = "./src/main.rs"
 
 [dependencies]
 # Voxel-rs
-voxel-rs-common = { path = "../common" }
-voxel-rs-server = { path = "../server" }
+#voxel-rs-common = { path = "../common" }
+#voxel-rs-server = { path = "../server" }
 
 # Utilities
 anyhow = "1.0"
-env_logger = "0.8"
+env_logger = "0.11.5"
 log = "0.4"
-ron = "0.6"
-serde = "1.0"
-toml = "0.5"
+ron = "0.8.1"
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8.19"
 futures = "0.3"
 crossbeam-channel = "0.5"
 
 # Graphics
-shaderc = "0.7"
-image = "0.23"
-texture_packer = "0.21"
-wgpu = "0.6"
-wgpu-types = "0.6"
-winit = "0.24"
+shaderc = "0.8.3"
+image = "0.25.2"
+texture_packer = "0.29.0"
+wgpu = "22.1.0"
+wgpu-types = "22.0.0"
+winit = "0.30.5"
 
 # Gui
 quint = { path = "../quint" }
-wgpu_glyph = "0.10"
 
 # Math
-nalgebra = "0.23"
+nalgebra = "0.33.0"

@@ -1,5 +1,5 @@
 use bincode::{DefaultOptions, Options};
-use crc::crc32;
+use crc::Crc;
 use serde::{Serialize, de::DeserializeOwned};
 use super::types::*;
 
@@ -22,7 +22,7 @@ pub fn serialize_packet<P: Serialize>(target: &mut Vec<u8>, packet: &P) -> binco
     for i in 0..4 {
         target[i] = MAGIC_NUMBER[i];
     }
-    let checksum = crc32::checksum_ieee(&target[..]).to_le_bytes();
+    let checksum = Crc::checksum(&target[..]).to_le_bytes();
     // Store the checksum
     for i in 0..4 {
         target[i] = checksum[i];
