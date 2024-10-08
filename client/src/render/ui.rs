@@ -6,7 +6,6 @@ use super::init::{load_glsl_shader, ShaderStage};
 use crate::ui::PrimitiveBuffer;
 use crate::window::{WindowBuffers, WindowData};
 use std::collections::{BTreeMap, HashMap};
-use wgpu_glyph::{FontId, ab_glyph::FontVec};
 
 pub struct UiRenderer {
     // Glyph rendering
@@ -24,7 +23,7 @@ impl<'a> UiRenderer {
     pub fn new(device: &mut wgpu::Device) -> Self {
         // Load fonts
         let default_font = FontVec::try_from_vec(
-            include_bytes!("../../../../assets/fonts/IBMPlexMono-Regular.ttf").to_vec()
+            include_bytes!("../../../assets/fonts/IBMPlexMono-Regular.ttf").to_vec()
         ).expect("Failed to load default font.");
         let mut glyph_brush_builder = wgpu_glyph::GlyphBrushBuilder::using_font(default_font);
         log::info!("Loading fonts from assets/fonts/list.toml");
@@ -53,7 +52,7 @@ impl<'a> UiRenderer {
             label: Some("ui_transform_buffer"),
             mapped_at_creation: false,
             size: 64,
-            usage: (wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST),
+            usage: (wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST),
         });
 
         // Create bind group layout
@@ -61,8 +60,12 @@ impl<'a> UiRenderer {
             label: None,
             entries: &[wgpu::BindGroupLayoutEntry {
                 binding: 0,
-                visibility: wgpu::ShaderStage::VERTEX,
-                ty: wgpu::BindingType::UniformBuffer { dynamic: false, min_binding_size: None },
+                visibility: wgpu::ShaderStages::VERTEX,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
                 count: None
             }],
         });
@@ -93,9 +96,9 @@ impl<'a> UiRenderer {
             vertex_shader,
             fragment_shader,
             wgpu::PrimitiveTopology::TriangleList,
-            wgpu::VertexBufferDescriptor {
-                stride: std::mem::size_of::<UiVertex>() as u64,
-                step_mode: wgpu::InputStepMode::Vertex,
+            wgpu::VertexBufferLayout {
+                array_stride: std::mem::size_of::<UiVertex>() as u64,
+                step_mode: wgpu::VertexStepMode::Vertex,
                 attributes: &UI_VERTEX_ATTRIBUTES,
             },
             false,
@@ -109,8 +112,8 @@ impl<'a> UiRenderer {
             transform_buffer,
             uniforms_bind_group,
             pipeline,
-            vertex_buffer: DynamicBuffer::with_capacity(device, 64, wgpu::BufferUsage::VERTEX),
-            index_buffer: DynamicBuffer::with_capacity(device, 64, wgpu::BufferUsage::INDEX),
+            vertex_buffer: DynamicBuffer::with_capacity(device, 64, wgpu::BufferUsages::VERTEX),
+            index_buffer: DynamicBuffer::with_capacity(device, 64, wgpu::BufferUsages::INDEX),
         }
     }
 
@@ -329,7 +332,7 @@ impl<'a> UiRenderer {
             ];
             let src_buffer = buffer_from_slice(
                 device,
-                wgpu::BufferUsage::COPY_SRC,
+                wgpu::BufferUsages::COPY_SRC,
                 to_u8_slice(&transformation_matrix[..])
             );
             encoder.copy_buffer_to_buffer(&src_buffer, 0, &self.transform_buffer, 0, 16 * 4);
@@ -343,7 +346,7 @@ impl<'a> UiRenderer {
                 rpass.set_pipeline(&self.pipeline);
                 rpass.set_bind_group(0, &self.uniforms_bind_group, &[]);
                 rpass.set_vertex_buffer(0, self.vertex_buffer.get_buffer().slice(..));
-                rpass.set_index_buffer(self.index_buffer.get_buffer().slice(..));
+                rpass.set_index_buffer(self.index_buffer.get_buffer().slice(..), Default::default());
                 rpass.draw_indexed(0..(self.index_buffer.len() as u32), 0, 0..1);
             }
         }
@@ -374,15 +377,15 @@ struct UiVertex {
     color: [f32; 4],
 }
 
-const UI_VERTEX_ATTRIBUTES: [wgpu::VertexAttributeDescriptor; 2] = [
-    wgpu::VertexAttributeDescriptor {
+const UI_VERTEX_ATTRIBUTES: [wgpu::VertexAttribute; 2] = [
+    wgpu::VertexAttribute {
         shader_location: 0,
-        format: wgpu::VertexFormat::Float3,
+        format: wgpu::VertexFormat::Float32x3,
         offset: 0,
     },
-    wgpu::VertexAttributeDescriptor {
+    wgpu::VertexAttribute {
         shader_location: 1,
-        format: wgpu::VertexFormat::Float4,
+        format: wgpu::VertexFormat::Float32x4,
         offset: 12,
     },
 ];

@@ -2,6 +2,8 @@
 use anyhow::Result;
 use std::path::Path;
 use log::{error, info};
+use server::launch_server;
+
 
 mod fps;
 mod input;
@@ -24,7 +26,7 @@ fn main() -> Result<()>{
     let settings = settings::load_settings(&config_folder, &config_file)?;
     info!("Loaded settings: {:?}", settings);
 
-    let (client, server) = dummy::new();
+    let (client, server) = common::network::dummy::new();
 
     std::thread::spawn(move||{
         if let Err(e) = launch_server(Box::new(server)) {

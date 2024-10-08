@@ -1,9 +1,9 @@
 use crate::world::BlockPos;
 
-pub(crate) mod simulation;
-mod aabb;
+pub mod simulation;
+pub mod aabb;
 mod camera;
-mod player;
+pub mod player;
 
 pub trait BlockContainer {
     fn is_block_full(&self, pos: BlockPos) -> bool;

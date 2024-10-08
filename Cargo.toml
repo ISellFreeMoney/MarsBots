@@ -1,5 +1,5 @@
 [workspace]
-members = ["client", "common", "network", "quint", "server"]
+members = ["client", "common", "network", "quint", "server", "wgpu_glyph"]
 
 [profile.release]
 debug = true

@@ -28,4 +28,4 @@ pub trait Client {
     fn send(&mut self, _: messages::ToServer);
 }
 
-mod dummy;
+pub mod dummy;

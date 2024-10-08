@@ -10,8 +10,8 @@ path = "./src/main.rs"
 
 [dependencies]
 # Voxel-rs
-#voxel-rs-common = { path = "../common" }
-#voxel-rs-server = { path = "../server" }
+common = { path = "../common" }
+server = { path = "../server" }
 
 # Utilities
 anyhow = "1.0"
@@ -27,12 +27,13 @@ crossbeam-channel = "0.5"
 shaderc = "0.8.3"
 image = "0.25.2"
 texture_packer = "0.29.0"
-wgpu = "22.1.0"
+wgpu = { version = "22.1.0", features = ["spirv"] }
 wgpu-types = "22.0.0"
 winit = "0.30.5"
 
 # Gui
 quint = { path = "../quint" }
+wgpu_glyph = {path = "../wgpu_glyph"}
 
 # Math
 nalgebra = "0.33.0"
