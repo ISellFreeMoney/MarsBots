@@ -488,6 +488,14 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "image",
+ "log",
+ "ron 0.9.0-alpha.0",
+ "serde",
+ "texture_packer",
+]
 
 [[package]]
 name = "concurrent-queue"
@@ -2138,6 +2146,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ron"
+version = "0.9.0-alpha.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c0bd893640cac34097a74f0c2389ddd54c62d6a3c635fa93cafe6b6bc19be6a"
+dependencies = [
+ "base64",
+ "bitflags 2.6.0",
+ "serde",
+ "serde_derive",
+ "unicode-ident",
+]
+
+[[package]]
 name = "roxmltree"
 version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2626,7 +2647,7 @@ dependencies = [
  "log",
  "nalgebra",
  "quint",
- "ron",
+ "ron 0.8.1",
  "serde",
  "shaderc",
  "texture_packer",
