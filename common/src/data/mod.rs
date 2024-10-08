@@ -125,12 +125,12 @@ pub fn load_data(data_directory: PathBuf) -> Result<Data> {
                 face_texture: names,
             } => BlockMesh::FullCube {
                 texture : [
-                    texture_rects[texture_registery.get_id_by_name((*names[0]).parse()?).unwrap() as usize],
-                    texture_rects[texture_registery.get_id_by_name((*names[1]).parse()?).unwrap() as usize],
-                    texture_rects[texture_registery.get_id_by_name((*names[2]).parse()?).unwrap() as usize],
-                    texture_rects[texture_registery.get_id_by_name((*names[3]).parse()?).unwrap() as usize],
-                    texture_rects[texture_registery.get_id_by_name((*names[4]).parse()?).unwrap() as usize],
-                    texture_rects[texture_registery.get_id_by_name((*names[5]).parse()?).unwrap() as usize]
+                    texture_rects[texture_registery.get_id_by_name(&names[0]).unwrap() as usize],
+                    texture_rects[texture_registery.get_id_by_name(&names[1]).unwrap() as usize],
+                    texture_rects[texture_registery.get_id_by_name(&names[2]).unwrap() as usize],
+                    texture_rects[texture_registery.get_id_by_name(&names[3]).unwrap() as usize],
+                    texture_rects[texture_registery.get_id_by_name(&names[4]).unwrap() as usize],
+                    texture_rects[texture_registery.get_id_by_name(&names[5]).unwrap() as usize]
                 ],
             },
         };

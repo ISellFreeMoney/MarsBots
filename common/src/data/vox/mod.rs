@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io::Read;
 use std::str::from_utf8;
-use image::codecs::png::FilterType::Paeth;
 
 pub mod item;
 

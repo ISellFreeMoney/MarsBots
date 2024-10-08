@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use crate::data::TextureRect;
 
 pub type BlockId = u16;
 

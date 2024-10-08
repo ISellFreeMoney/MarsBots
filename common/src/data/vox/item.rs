@@ -20,7 +20,7 @@ pub fn generate_item_model(
             let rgba = atlas.get_pixel(u, v);
             if rgba[3] == 255 {
                 full.push(true);
-                voxels.push(((rgba[2] as  u32) << 16) + ((rgba[1] as u32) << 8) + rgba[0] as u32);;
+                voxels.push(((rgba[2] as  u32) << 16) + ((rgba[1] as u32) << 8) + rgba[0] as u32);
             } else {
                 full.push(false);
                 voxels.push(0);
