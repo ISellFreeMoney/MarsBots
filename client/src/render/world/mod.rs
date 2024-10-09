@@ -8,6 +8,7 @@ use crate::texture::load_image;
 use crate::window::WindowBuffers;
 use image::{ImageBuffer, Rgba};
 use nalgebra::{Matrix4, Similarity3, Translation3, UnitQuaternion, Vector3};
+use wgpu::ShaderModuleDescriptor;
 use wgpu_types::SamplerBindingType;
 use common::data::vox::VoxelModel;
 use common::debug::send_debug_info;
@@ -85,9 +86,15 @@ impl WorldRenderer {
         // Create chunk pipeline
         let chunk_pipeline = {
             let vertex_shader_bytes = load_glsl_shader(ShaderStage::Vertex, "assets/shaders/world.vert");
-            let vertex_shader = wgpu::util::make_spirv(&vertex_shader_bytes);
+            let vertex_shader = ShaderModuleDescriptor {
+                label: None,
+                source: wgpu::util::make_spirv(&vertex_shader_bytes),
+            };
             let fragment_shader_bytes = load_glsl_shader(ShaderStage::Fragment, "assets/shaders/world.frag");
-            let fragment_shader = wgpu::util::make_spirv(&fragment_shader_bytes);
+            let fragment_shader = ShaderModuleDescriptor {
+                label: None,
+                source: wgpu::util::make_spirv(&fragment_shader_bytes),
+            };
 
             create_default_pipeline(
                 device,
@@ -112,10 +119,14 @@ impl WorldRenderer {
         // Create skybox pipeline
         let skybox_pipeline = {
             let vertex_shader_bytes = load_glsl_shader(ShaderStage::Vertex, "assets/shaders/skybox.vert");
-            let vertex_shader = wgpu::util::make_spirv(&vertex_shader_bytes);
-            let fragment_shader_bytes = load_glsl_shader(ShaderStage::Fragment, "assets/shaders/skybox.frag");
-            let fragment_shader = wgpu::util::make_spirv(&fragment_shader_bytes);
-
+            let vertex_shader = ShaderModuleDescriptor {
+                label: None,
+                source: wgpu::util::make_spirv(&vertex_shader_bytes),
+            };            let fragment_shader_bytes = load_glsl_shader(ShaderStage::Fragment, "assets/shaders/skybox.frag");
+            let fragment_shader = ShaderModuleDescriptor {
+                label: None,
+                source: wgpu::util::make_spirv(&fragment_shader_bytes),
+            };
             create_default_pipeline(
                 device,
                 &vpm_bind_group_layout,
@@ -133,10 +144,14 @@ impl WorldRenderer {
         });
         let target_pipeline = {
             let vertex_shader_bytes = load_glsl_shader(ShaderStage::Vertex, "assets/shaders/target.vert");
-            let vertex_shader = wgpu::util::make_spirv(&vertex_shader_bytes);
-            let fragment_shader_bytes = load_glsl_shader(ShaderStage::Fragment, "assets/shaders/target.frag");
-            let fragment_shader = wgpu::util::make_spirv(&fragment_shader_bytes);
-
+            let vertex_shader = ShaderModuleDescriptor {
+                label: None,
+                source: wgpu::util::make_spirv(&vertex_shader_bytes),
+            };            let fragment_shader_bytes = load_glsl_shader(ShaderStage::Fragment, "assets/shaders/target.frag");
+            let fragment_shader = ShaderModuleDescriptor {
+                label: None,
+                source: wgpu::util::make_spirv(&fragment_shader_bytes),
+            };
             create_default_pipeline(
                 device,
                 &vpm_bind_group_layout,
@@ -148,10 +163,14 @@ impl WorldRenderer {
         // Create model pipeline
         let model_pipeline = {
             let vertex_shader_bytes = load_glsl_shader(ShaderStage::Vertex, "assets/shaders/model.vert");
-            let vertex_shader = wgpu::util::make_spirv(&vertex_shader_bytes);
-            let fragment_shader_bytes = load_glsl_shader(ShaderStage::Fragment, "assets/shaders/model.frag");
-            let fragment_shader = wgpu::util::make_spirv(&fragment_shader_bytes);
-
+            let vertex_shader = ShaderModuleDescriptor {
+                label: None,
+                source: wgpu::util::make_spirv(&vertex_shader_bytes),
+            };            let fragment_shader_bytes = load_glsl_shader(ShaderStage::Fragment, "assets/shaders/model.frag");
+            let fragment_shader = ShaderModuleDescriptor {
+                label: None,
+                source: wgpu::util::make_spirv(&fragment_shader_bytes),
+            };
             create_default_pipeline(
                 device,
                 &vpm_bind_group_layout,

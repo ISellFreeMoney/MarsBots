@@ -26,6 +26,7 @@ impl Quad {
         return self.v1 == self.v2 && self.v2 == self.v3 && self.v3 == self.v4;
     }
 }
+
 const D: [[i32; 3]; 6] = [
     [1, 0, 0],
     [-1, 0, 0],
@@ -338,12 +339,12 @@ pub fn greedy_meshing(
 
         #[inline(always)]
         unsafe fn ijk_to_pos(s: usize, i: i32, j: i32, k: i32) -> (i32, i32, i32) {
-            let delta0 = D_DELTA0.get(s);
-            let delta1 = D_DELTA1.get(s);
-            let delta2 = D_DELTA2.get(s);
-            let x = i * *delta0.expect("REASON").get_unchecked(0) + j * *delta1.get_unchecked(0) + k * *delta2.get_unchecked(0);
-            let y = i * *delta0.expect("REASON").get_unchecked(1) + j * *delta1.get_unchecked(1) + k * *delta2.get_unchecked(1);
-            let z = i * *delta0.expect("REASON").get_unchecked(2) + j * *delta1.get_unchecked(2) + k * *delta2.get_unchecked(2);
+            let delta0 = D_DELTA0.get_unchecked(s);
+            let delta1 = D_DELTA1.get_unchecked(s);
+            let delta2 = D_DELTA2.get_unchecked(s);
+            let x = i * *delta0.get_unchecked(0) + j * *delta1.get_unchecked(0) + k * *delta2.get_unchecked(0);
+            let y = i * *delta0.get_unchecked(1) + j * *delta1.get_unchecked(1) + k * *delta2.get_unchecked(1);
+            let z = i * *delta0.get_unchecked(2) + j * *delta1.get_unchecked(2) + k * *delta2.get_unchecked(2);
             (x, y, z)
         };
 
@@ -388,21 +389,21 @@ pub fn greedy_meshing(
 
                                 while j2 < CHUNK_SIZE as i32
                                     && *to_mesh.get_unchecked(ind_mesh(s, pos.0, pos.1, pos.2))
+                                {
+                                    let next_quad = *quads.get_unchecked(ind_mesh(s, pos.0, pos.1, pos.2));
+                                    if next_quad.v1 == current_quad.v1
+                                        && next_quad.v2 == current_quad.v2
+                                        && next_quad.v1 == next_quad.v3
+                                        && next_quad.v2 == next_quad.v4
+                                        && current_quad.block_id == next_quad.block_id
                                     {
-                                        let next_quad = *quads.get_unchecked(ind_mesh(s, pos.0, pos.1, pos.2));
-                                        if next_quad.v1 == current_quad.v1
-                                            && next_quad.v2 == current_quad.v2
-                                            && next_quad.v1 == next_quad.v3
-                                            && next_quad.v2 == next_quad.v4
-                                            && current_quad.block_id == next_quad.block_id
-                                        {
-                                            *to_mesh.get_unchecked_mut(ind_mesh(s, pos.0, pos.1, pos.2)) = false;
-                                            j2 += 1;
-                                            pos = ijk_to_pos(s, i, j2, k);
-                                        } else {
-                                            break;
-                                        }
+                                        *to_mesh.get_unchecked_mut(ind_mesh(s, pos.0, pos.1, pos.2)) = false;
+                                        j2 += 1;
+                                        pos = ijk_to_pos(s, i, j2, k);
+                                    } else {
+                                        break;
                                     }
+                                }
                                 j_end = j2;
 
                                 if current_quad.v1 == current_quad.v2 {
@@ -437,21 +438,21 @@ pub fn greedy_meshing(
                                 let mut pos = ijk_to_pos(s, i, j, k2);
                                 while k2 < CHUNK_SIZE as i32
                                     && *to_mesh.get_unchecked(ind_mesh(s, pos.0, pos.1, pos.2))
+                                {
+                                    let next_quad = *quads.get_unchecked(ind_mesh(s, pos.0, pos.1, pos.2));
+                                    if next_quad.v1 == current_quad.v1
+                                        && next_quad.v3 == current_quad.v3
+                                        && next_quad.v1 == next_quad.v2
+                                        && next_quad.v3 == next_quad.v4
+                                        && next_quad.block_id == current_quad.block_id
                                     {
-                                        let next_quad = *quads.get_unchecked(ind_mesh(s, pos.0, pos.1, pos.2));
-                                        if next_quad.v1 == current_quad.v1
-                                            && next_quad.v3 == current_quad.v3
-                                            && next_quad.v1 == next_quad.v2
-                                            && next_quad.v3 == next_quad.v4
-                                            && next_quad.block_id == current_quad.block_id
-                                        {
-                                            *to_mesh.get_unchecked_mut(ind_mesh(s, pos.0, pos.1, pos.2)) = false;
-                                            k2 += 1;
-                                            pos = ijk_to_pos(s, i, j, k2);
-                                        } else {
-                                            break;
-                                        }
+                                        *to_mesh.get_unchecked_mut(ind_mesh(s, pos.0, pos.1, pos.2)) = false;
+                                        k2 += 1;
+                                        pos = ijk_to_pos(s, i, j, k2);
+                                    } else {
+                                        break;
                                     }
+                                }
                                 k_end = k2;
                             }
 

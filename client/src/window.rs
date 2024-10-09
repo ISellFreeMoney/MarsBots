@@ -6,7 +6,7 @@ use log::{info, warn};
 use texture_packer::texture::Texture;
 use wgpu_types::{TextureFormat, TextureUsages};
 use winit::dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize};
-use winit::event::{ElementState, MouseButton};
+use winit::event::{ElementState, MouseButton, WindowEvent};
 use winit::event::WindowEvent::RedrawRequested;
 use winit::event_loop;
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
@@ -70,7 +70,13 @@ pub trait State{
 pub const COLOR_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Bgra8UnormSrgb;
 pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 
-pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
+trait ApplicationHandler<T> {
+    fn handle_event(&mut self, event: &T);
+}
+
+
+
+pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> () {
     info!("Opening window");
     let window_title = "MarsRobots".to_owned();
     let event_loop = EventLoop::new().unwrap();
@@ -104,8 +110,8 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
     let mut msaa_texture_descriptor = wgpu::TextureDescriptor {
         label: None,
         size: wgpu::Extent3d {
-            width: surface.width(),
-            height: surface.height(),
+            width: surface.get_current_texture().iter().size_hint().0 as u32,
+            height: surface.get_current_texture().iter().size_hint().1.unwrap() as u32,
             depth_or_array_layers: 0,
         },
         mip_level_count: 1,
@@ -166,7 +172,7 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
     let mut key_state_changes = Vec::new();
 
     // Main loop
-    event_loop.run_app(&mut move |event, _, control_flow| {
+    event_loop.run_app(&mut move |event,_| {
         use winit::event::Event::*;
         match event {
             /* NORMAL EVENT HANDLING */
@@ -175,7 +181,7 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
                 match event {
                     Resized(_) | ScaleFactorChanged { .. } => window_resized = true,
                     Moved(_) => (),
-                    CloseRequested | Destroyed => *control_flow = ControlFlow::Wait,
+                    CloseRequested | Destroyed => (),
                     DroppedFile(_) | HoveredFile(_) | HoveredFileCancelled => (),
                     Focused(focused) => {
                         window_data.focused = focused;
@@ -304,7 +310,7 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
                         return;
                     }
                     StateTransition::CloseWindow => {
-                        *control_flow = ControlFlow::Wait;
+
                     }
                 }
 
@@ -333,7 +339,7 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
                         queue.submit(vec![cmd]);
                     }
                     StateTransition::CloseWindow => {
-                        *control_flow = ControlFlow::Wait;
+                        ();
                     }
                 }
             }

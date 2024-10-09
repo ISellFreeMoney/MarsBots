@@ -87,16 +87,15 @@ impl<'a> UiRenderer {
 
         // Create shader modules
         let vertex_shader_bytes = load_glsl_shader(ShaderStage::Vertex, "assets/shaders/gui-rect.vert");
-        // let vertex_shader = wgpu::util::make_spirv(&vertex_shader_bytes);
         let vertex_shader = wgpu::ShaderModuleDescriptor {
             label: Label::default(),
-            source: ShaderSource::Wgsl(vertex_shader_bytes.into()),
+            source: wgpu::util::make_spirv(&vertex_shader_bytes),
         };
 
         let fragment_shader_bytes = load_glsl_shader(ShaderStage::Fragment, "assets/shaders/gui-rect.frag");
         let fragment_shader = wgpu::ShaderModuleDescriptor {
             label: Label::default(),
-            source: ShaderSource::Wgsl(fragment_shader_bytes.into()),
+            source: wgpu::util::make_spirv(&fragment_shader_bytes),
         };
 
         log::trace!("Creating pipeline.");
