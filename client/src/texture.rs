@@ -1,6 +1,7 @@
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use image::{ImageBuffer, Rgba};
 use log::info;
+use wgpu_types::{TextureAspect, TextureFormat};
 
 const MIPMAP_LEVELS: u32 = 5;
 
@@ -55,13 +56,14 @@ pub fn load_image(
         size: wgpu::Extent3d {
             width: image_size,
             height: image_size,
-            depth: 1,
+            depth_or_array_layers: 1,
         },
         mip_level_count: MIPMAP_LEVELS,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
         format: wgpu::TextureFormat::Rgba8Unorm,
-        usage: wgpu::TextureUsage::COPY_DST | wgpu::TextureUsage::SAMPLED,
+        usage: wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::STORAGE_BINDING,
+        view_formats: (&[TextureFormat::Rgba8Unorm]),
     };
     let texture = device.create_texture(&texture_descriptor);
     // Send texture to GPU
@@ -71,18 +73,18 @@ pub fn load_image(
         let current_size = image_size >> level;
         let src_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: None,
-            usage: wgpu::BufferUsage::COPY_SRC,
+            usage: wgpu::BufferUsages::COPY_SRC,
             contents: &mipmaps[level as usize]
         });
-        let buffer_view = wgpu::BufferCopyView {
-            layout: wgpu::TextureDataLayout {
+        let buffer_view = wgpu::ImageCopyBuffer {
+            layout: wgpu::ImageDataLayout {
                 offset: 0,
-                rows_per_image: current_size,
-                bytes_per_row: 4 * current_size,
+                rows_per_image: Option::from(current_size),
+                bytes_per_row: Option::from(4 * current_size),
             },
             buffer: &src_buffer,
         };
-        let texture_view = wgpu::TextureCopyView {
+        let texture_view = wgpu::ImageCopyTexture {
             texture: &texture,
             mip_level: level,
             origin: wgpu::Origin3d {
@@ -90,6 +92,7 @@ pub fn load_image(
                 y: 0,
                 z: 0,
             },
+            aspect: TextureAspect::DepthOnly,
         };
         encoder.copy_buffer_to_texture(
             buffer_view,
@@ -97,7 +100,7 @@ pub fn load_image(
             wgpu::Extent3d {
                 width: current_size,
                 height: current_size,
-                depth: 1,
+                depth_or_array_layers: 1,
             },
         );
     }

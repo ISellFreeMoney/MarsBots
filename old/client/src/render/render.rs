@@ -93,7 +93,7 @@ pub fn clear_color_and_depth(encoder: &mut wgpu::CommandEncoder, buffers: Window
 }
 
 /// Clear the depth buffer
-pub fn clear_depth(encoder: &mut wgpu::CommandEncoder, buffers: WindowBuffers) {
+ fn clear_depth(encoder: &mut wgpu::CommandEncoder, buffers: WindowBuffers) {
     let _rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
         color_attachments: &[],
         depth_stencil_attachment: Some(create_clear_depth_attachment(buffers)),

@@ -15,14 +15,14 @@ impl FpsCounter {
 
     pub fn add_frame(&mut self) {
         let new_frame = Instant::now();
-        while let Some(frame) = self.frames.front() {
-            if (new_frame - *frame).as_secs() >= SECONDS_DIFFERENCE {
+        while let Some(frames) = self.frames.front() {
+            if (new_frame - *frames).as_secs() >= SECONDS_DIFFERENCE {
                 self.frames.pop_front();
             } else {
                 break;
             }
         }
-        self.frames.push_back(new_frame);
+        self.frames.push_front(new_frame);
     }
 
     pub fn fps(&self) -> usize {

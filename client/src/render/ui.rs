@@ -6,6 +6,8 @@ use super::init::{load_glsl_shader, ShaderStage};
 use crate::ui::PrimitiveBuffer;
 use crate::window::{WindowBuffers, WindowData};
 use std::collections::{BTreeMap, HashMap};
+use wgpu_glyph::ab_glyph::FontVec;
+use wgpu_glyph::FontId;
 
 pub struct UiRenderer {
     // Glyph rendering
@@ -77,7 +79,7 @@ impl<'a> UiRenderer {
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
                 resource: wgpu::BindingResource::Buffer(
-                    transform_buffer.slice(0..16)
+                    transform_buffer.as_entire_buffer_binding()
                 ),
             }],
         });
@@ -95,13 +97,6 @@ impl<'a> UiRenderer {
             &uniform_layout,
             vertex_shader,
             fragment_shader,
-            wgpu::PrimitiveTopology::TriangleList,
-            wgpu::VertexBufferLayout {
-                array_stride: std::mem::size_of::<UiVertex>() as u64,
-                step_mode: wgpu::VertexStepMode::Vertex,
-                attributes: &UI_VERTEX_ATTRIBUTES,
-            },
-            false,
         );
 
         log::trace!("Created pipeline.");

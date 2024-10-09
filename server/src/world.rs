@@ -154,7 +154,7 @@ impl World {
     /// Fetch the new light chunks from the light worker
     pub fn get_new_light_chunks(&mut self) {
         while let Some(light_chunk) = self.light_worker.get_result() {
-            if let Some(mut server_chunk) = self.chunks.get_mut(&light_chunk.pos) {
+            if let Some(server_chunk) = self.chunks.get_mut(&light_chunk.pos) {
                 server_chunk.light_chunk = light_chunk;
                 server_chunk.is_in_light_queue = false;
                 server_chunk.version = self.next_chunk_version;

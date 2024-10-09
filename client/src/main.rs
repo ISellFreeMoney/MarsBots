@@ -32,11 +32,7 @@ fn main() -> Result<()>{
         if let Err(e) = launch_server(Box::new(server)) {
             error!(
                 "An error occurred while running the server. Cause: {}",
-                e,
-                e.chain()
-                    .enumerate().map(|(i,e)| format!("caused by {}", i))
-                    .collect::<Vec<_>>()
-                    .join("\n")
+                e
             );
         }
     });

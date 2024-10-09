@@ -341,7 +341,12 @@ mod tests {
     fn test_multi_buffer() {
         use wgpu::*;
 
-        let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
+        let instance = wgpu::Instance::new(InstanceDescriptor {
+            backends: Backends::PRIMARY,
+            flags: Default::default(),
+            dx12_shader_compiler: Default::default(),
+            gles_minor_version: Default::default(),
+        });
         let adapter = block_on(instance.request_adapter(&RequestAdapterOptions {
             compatible_surface: None,
             power_preference: PowerPreference::HighPerformance,

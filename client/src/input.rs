@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use winit::event::{ElementState, KeyEvent, Modifiers, MouseButton};
 use winit::keyboard::ModifiersState;
 use winit::platform::scancode::PhysicalKeyExtScancode;
+use common::player::PlayerInput;
 
 #[derive(Debug, Clone, Copy)]
 pub struct YawPitch{

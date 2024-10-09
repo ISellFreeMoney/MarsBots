@@ -1,5 +1,7 @@
 //! Helpers for pipeline creation and initialization
 use std::path::Path;
+use wgpu::{FragmentState, VertexState};
+use wgpu_types::{BlendComponent, BlendFactor, BlendOperation, BlendState};
 
 /// Shader stage
 pub enum ShaderStage {
@@ -25,63 +27,63 @@ pub fn load_glsl_shader<'a, P: AsRef<Path>>(stage: ShaderStage, path: P) -> Vec<
 }
 
 /// Default `RasterizationStateDescriptor` with no backface culling
-pub const RASTERIZER_NO_CULLING: wgpu::RasterizationStateDescriptor =
-    wgpu::RasterizationStateDescriptor {
-        front_face: wgpu::FrontFace::Ccw,
-        cull_mode: wgpu::CullMode::None,
-        depth_bias: 0,
-        depth_bias_slope_scale: 0.0,
-        depth_bias_clamp: 0.0,
-        clamp_depth: false
-    };
+//pub const RASTERIZER_NO_CULLING: wgpu::RasterizationStateDescriptor =
+    //wgpu::RasterizationStateDescriptor {
+    //    front_face: wgpu::FrontFace::Ccw,
+    //    cull_mode: wgpu::CullMode::None,
+  //      depth_bias: 0,
+//        depth_bias_slope_scale: 0.0,
+//        depth_bias_clamp: 0.0,
+//        clamp_depth: false
+//    };
 
 /// Default `RasterizationStateDescriptor` with backface culling
-pub const RASTERIZER_WITH_CULLING: wgpu::RasterizationStateDescriptor =
-    wgpu::RasterizationStateDescriptor {
-        cull_mode: wgpu::CullMode::Back,
-        ..RASTERIZER_NO_CULLING
-    };
+//pub const RASTERIZER_WITH_CULLING: wgpu::Rast =
+ //   wgpu::RasterizationStateDescriptor {
+  //      cull_mode: wgpu::CullMode::Back,
+   //     ..RASTERIZER_NO_CULLING
+    //};
 
 /// Default `ColorStateDescriptor`
-pub const DEFAULT_COLOR_STATE_DESCRIPTOR: [wgpu::ColorStateDescriptor; 1] =
-    [wgpu::ColorStateDescriptor {
+pub const DEFAULT_COLOR_STATE_DESCRIPTOR: [wgpu::ColorTargetState; 1] =
+    [wgpu::ColorTargetState {
         format: crate::window::COLOR_FORMAT,
-        color_blend: wgpu::BlendDescriptor {
-            src_factor: wgpu::BlendFactor::SrcAlpha,
-            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-            operation: wgpu::BlendOperation::Add,
-        },
-        alpha_blend: wgpu::BlendDescriptor {
-            src_factor: wgpu::BlendFactor::One,
-            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-            operation: wgpu::BlendOperation::Add,
-        },
-        write_mask: wgpu::ColorWrite::ALL,
+
+        write_mask: wgpu::ColorWrites::ALL,
+        blend: Option::from(BlendState {
+            alpha: BlendComponent {
+                src_factor: BlendFactor::One,
+                dst_factor: BlendFactor::OneMinusSrcAlpha,
+                operation: BlendOperation::Add,
+        }, color: BlendComponent {
+                src_factor: BlendFactor::SrcAlpha,
+                dst_factor: BlendFactor::OneMinusSrcAlpha,
+                operation: BlendOperation::Add,
+            }
+        }),
     }];
 
 /// Default `DepthStencilStateDescriptor`
-pub const DEFAULT_DEPTH_STENCIL_STATE_DESCRIPTOR: wgpu::DepthStencilStateDescriptor =
-    wgpu::DepthStencilStateDescriptor {
+pub const DEFAULT_DEPTH_STENCIL_STATE_DESCRIPTOR: wgpu::DepthStencilState =
+    wgpu::DepthStencilState {
         format: crate::window::DEPTH_FORMAT,
         depth_write_enabled: true,
         depth_compare: wgpu::CompareFunction::Less,
-        stencil: wgpu::StencilStateDescriptor {
-            front: wgpu::StencilStateFaceDescriptor::IGNORE,
-            back: wgpu::StencilStateFaceDescriptor::IGNORE,
+        stencil: wgpu::StencilState {
+            front: wgpu::StencilFaceState::IGNORE,
+            back: wgpu::StencilFaceState::IGNORE,
             read_mask: 0,
             write_mask: 0,
-        }
+        },
+        bias: Default::default(),
     };
 
 /// Create a default pipeline
 pub fn create_default_pipeline(
     device: &wgpu::Device,
     uniform_layout: &wgpu::BindGroupLayout,
-    vertex_shader: wgpu::ShaderModuleSource,
-    fragment_shader: wgpu::ShaderModuleSource,
-    primitive_topology: wgpu::PrimitiveTopology,
-    vertex_buffer_descriptor: wgpu::VertexBufferDescriptor,
-    cull_back_faces: bool,
+    vertex_shader: wgpu::ShaderModuleDescriptor,
+    fragment_shader: wgpu::ShaderModuleDescriptor,
 ) -> wgpu::RenderPipeline {
     // Shaders
     let vertex_shader_module = device.create_shader_module(vertex_shader);
@@ -99,28 +101,22 @@ pub fn create_default_pipeline(
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: None,
         layout: Some(&pipeline_layout),
-        vertex_stage: wgpu::ProgrammableStageDescriptor {
+        vertex: VertexState {
             module: &vertex_shader_module,
             entry_point: "main",
+            compilation_options: Default::default(),
+            buffers: &[],
         },
-        fragment_stage: Some(wgpu::ProgrammableStageDescriptor {
+        primitive: Default::default(),
+        depth_stencil: Some(DEFAULT_DEPTH_STENCIL_STATE_DESCRIPTOR),
+        multisample: Default::default(),
+        fragment: Option::from(FragmentState {
             module: &fragment_shader_module,
             entry_point: "main",
+            compilation_options: Default::default(),
+            targets: &[],
         }),
-        vertex_state: wgpu::VertexStateDescriptor {
-            index_format: wgpu::IndexFormat::Uint32,
-            vertex_buffers: &[vertex_buffer_descriptor],
-        },
-        rasterization_state: Some(if cull_back_faces {
-            RASTERIZER_WITH_CULLING
-        } else {
-            RASTERIZER_NO_CULLING
-        }),
-        primitive_topology,
-        color_states: &DEFAULT_COLOR_STATE_DESCRIPTOR,
-        depth_stencil_state: Some(DEFAULT_DEPTH_STENCIL_STATE_DESCRIPTOR),
-        sample_count: crate::window::SAMPLE_COUNT,
-        sample_mask: 0xFFFFFFFF,
-        alpha_to_coverage_enabled: false,
+        multiview: None,
+        cache: None,
     })
 }

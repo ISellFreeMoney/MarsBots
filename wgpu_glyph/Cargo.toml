@@ -1,0 +1,23 @@
+[package]
+name = "wgpu_glyph"
+version = "0.22.0"
+authors = ["Héctor Ramón Jiménez <hector0193@gmail.com>"]
+edition = "2021"
+description = "A fast text renderer for wgpu, powered by glyph_brush"
+license = "MIT"
+keywords = ["font", "ttf", "truetype", "wgpu", "text"]
+
+
+[dependencies]
+wgpu = "22.1.0"
+glyph_brush = "0.7"
+log = "0.4"
+
+[dependencies.bytemuck]
+version = "1.9"
+features = ["derive"]
+
+[dev-dependencies]
+env_logger = "0.11.5"
+winit = "0.30.5"
+futures = "0.3"

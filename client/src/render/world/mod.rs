@@ -94,13 +94,6 @@ impl WorldRenderer {
                 &chunk_bind_group_layout,
                 vertex_shader,
                 fragment_shader,
-                wgpu::PrimitiveTopology::TriangleList,
-                wgpu::VertexBufferLayout {
-                    array_stride: std::mem::size_of::<ChunkVertex>() as u64,
-                    step_mode: wgpu::VertexStepMode::Vertex,
-                    attributes: &CHUNK_VERTEX_ATTRIBUTES,
-                },
-                true,
             )
         };
 
@@ -128,13 +121,6 @@ impl WorldRenderer {
                 &vpm_bind_group_layout,
                 vertex_shader,
                 fragment_shader,
-                wgpu::PrimitiveTopology::TriangleList,
-                wgpu::VertexBufferLayout {
-                    array_stride: std::mem::size_of::<SkyboxVertex>() as u64,
-                    step_mode: wgpu::VertexStepMode::Vertex,
-                    attributes: &SKYBOX_VERTEX_ATTRIBUTES,
-                },
-                false,
             )
         };
 
@@ -156,13 +142,6 @@ impl WorldRenderer {
                 &vpm_bind_group_layout,
                 vertex_shader,
                 fragment_shader,
-                wgpu::PrimitiveTopology::LineList,
-                wgpu::VertexBufferLayout {
-                    array_stride: std::mem::size_of::<SkyboxVertex>() as u64,
-                    step_mode: wgpu::VertexStepMode::Vertex,
-                    attributes: &SKYBOX_VERTEX_ATTRIBUTES,
-                },
-                false,
             )
         };
 
@@ -178,13 +157,6 @@ impl WorldRenderer {
                 &vpm_bind_group_layout,
                 vertex_shader,
                 fragment_shader,
-                wgpu::PrimitiveTopology::TriangleList,
-                wgpu::VertexBufferLayout {
-                    array_stride: std::mem::size_of::<RgbVertex>() as u64,
-                    step_mode: wgpu::VertexStepMode::Vertex,
-                    attributes: &RGB_VERTEX_ATTRIBUTES,
-                },
-                true,
             )
         };
 

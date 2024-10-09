@@ -1,5 +1,6 @@
 [workspace]
 members = ["client", "common", "network", "quint", "server", "wgpu_glyph"]
+resolver = "1"
 
 [profile.release]
 debug = true

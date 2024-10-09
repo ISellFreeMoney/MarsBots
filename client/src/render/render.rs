@@ -1,21 +1,22 @@
 //! Helpers for renderer passes
 
+use wgpu::StoreOp;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use crate::window::WindowBuffers;
 
 /// Create an attachment for the depth buffer that doesn't clear it.
 pub fn create_default_depth_stencil_attachment(
     depth_buffer: &wgpu::TextureView,
-) -> wgpu::RenderPassDepthStencilAttachmentDescriptor {
-    wgpu::RenderPassDepthStencilAttachmentDescriptor {
-        attachment: depth_buffer,
+) -> wgpu::RenderPassDepthStencilAttachment {
+    wgpu::RenderPassDepthStencilAttachment {
+        view: &(depth_buffer),
         depth_ops: Some(wgpu::Operations {
             load: wgpu::LoadOp::Load,
-            store: true
+            store: StoreOp::Store
         }),
         stencil_ops: Some(wgpu::Operations {
             load: wgpu::LoadOp::Load,
-            store: true
+            store: StoreOp::Store
         })
     }
 }
@@ -26,60 +27,66 @@ pub fn create_default_render_pass<'a>(
     buffers: WindowBuffers<'a>,
 ) -> wgpu::RenderPass<'a> {
     encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-        color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
-            attachment: buffers.multisampled_texture_buffer,
+        label: None,
+        color_attachments: &[Option::from(wgpu::RenderPassColorAttachment {
+            view: &(buffers.multisampled_texture_buffer),
             resolve_target: None,
             ops: wgpu::Operations {
                 load: wgpu::LoadOp::Load,
-                store: true
+                store: StoreOp::Store
             },
-        }],
+        })],
         depth_stencil_attachment: Some(create_default_depth_stencil_attachment(
             buffers.depth_buffer,
         )),
+        timestamp_writes: None,
+        occlusion_query_set: None,
     })
 }
 
 /// Encode a render pass to resolve the multisampled frame buffer to the window frame buffer
 pub fn encode_resolve_render_pass<'a>(encoder: &mut wgpu::CommandEncoder, buffers: WindowBuffers) {
     let _rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-        color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
-            attachment: buffers.multisampled_texture_buffer,
+        label: None,
+        color_attachments: &[Option::from(wgpu::RenderPassColorAttachment {
+            view: &(buffers.multisampled_texture_buffer),
             resolve_target: Some(buffers.texture_buffer),
             ops: wgpu::Operations {
                 load: wgpu::LoadOp::Load,
-                store: true
+                store: StoreOp::Store
             },
-        }],
+        })],
         depth_stencil_attachment: None,
+        timestamp_writes: None,
+        occlusion_query_set: None,
     });
 }
 
-fn create_clear_color_attachment(
+pub fn create_clear_color_attachment(
     buffers: WindowBuffers,
-) -> [wgpu::RenderPassColorAttachmentDescriptor; 1] {
-    [wgpu::RenderPassColorAttachmentDescriptor {
-        attachment: buffers.multisampled_texture_buffer,
+) -> [wgpu::RenderPassColorAttachment; 1] {
+    [wgpu::RenderPassColorAttachment {
+        view: &(buffers.multisampled_texture_buffer),
         resolve_target: None,
         ops: wgpu::Operations {
             load: wgpu::LoadOp::Clear(crate::window::CLEAR_COLOR),
-            store: true
+            store: StoreOp::Store
         },
     }]
 }
 
-fn create_clear_depth_attachment(
+pub fn create_clear_depth_attachment(
     buffers: WindowBuffers,
-) -> wgpu::RenderPassDepthStencilAttachmentDescriptor {
-    wgpu::RenderPassDepthStencilAttachmentDescriptor {
-        attachment: buffers.depth_buffer,
+) -> wgpu::RenderPassDepthStencilAttachment {
+    wgpu::RenderPassDepthStencilAttachment {
+        view: &(buffers.depth_buffer),
         depth_ops: Some(wgpu::Operations {
             load: wgpu::LoadOp::Clear(crate::window::CLEAR_DEPTH),
-            store: true
+            store: StoreOp::Store
         }),
         stencil_ops: Some(wgpu::Operations {
             load: wgpu::LoadOp::Load,
-            store: true
+            store: StoreOp::Store
         })
     }
 }
@@ -87,16 +94,21 @@ fn create_clear_depth_attachment(
 /// Clear the multisampled color buffer and the depth buffer
 pub fn clear_color_and_depth(encoder: &mut wgpu::CommandEncoder, buffers: WindowBuffers) {
     let _rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-        color_attachments: &create_clear_color_attachment(buffers),
-        depth_stencil_attachment: Some(create_clear_depth_attachment(buffers)),
+        label: None,
+        color_attachments: &[],
+        depth_stencil_attachment: None,
+        timestamp_writes: None,
+        occlusion_query_set: None,
     });
-}
 
 /// Clear the depth buffer
 pub fn clear_depth(encoder: &mut wgpu::CommandEncoder, buffers: WindowBuffers) {
     let _rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        label: None,
         color_attachments: &[],
         depth_stencil_attachment: Some(create_clear_depth_attachment(buffers)),
+        timestamp_writes: None,
+        occlusion_query_set: None,
     });
 }
 
@@ -112,4 +124,5 @@ pub fn buffer_from_slice(device: &wgpu::Device, usage: wgpu::BufferUsages, data:
         usage,
         contents: &data
     })
+}
 }
