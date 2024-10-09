@@ -7,7 +7,7 @@ use std::{
     path::Path,
 };
 
-pub fn load_settings(folder_path: &Path, file_path: &Path) -> Result<(Settings)> {
+pub fn load_settings(folder_path: &Path, file_path: &Path) -> Result<Settings> {
     info!(
         "Loading settings from {:?} to {:?}",
         file_path.display(),
@@ -30,7 +30,7 @@ pub fn load_settings(folder_path: &Path, file_path: &Path) -> Result<(Settings)>
         settings
     };
     //TODO: write settings
-    Ok((settings))
+    Ok(settings)
 }
 
 fn write_settings(path: impl AsRef<Path>, settings: &Settings) -> Result<()> {

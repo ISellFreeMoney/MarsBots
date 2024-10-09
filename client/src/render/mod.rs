@@ -4,8 +4,7 @@
 mod buffers;
 mod init;
 mod render;
-pub use self::buffers::MultiBuffer;
-pub use self::render::*;
+pub use self::render::{buffer_from_slice, clear_color_and_depth, clear_depth, to_u8_slice};
 
 /* OTHER HELPER MODULES */
 mod frustum;
@@ -15,4 +14,4 @@ pub use self::frustum::Frustum;
 mod ui;
 pub mod world;
 pub use self::ui::UiRenderer;
-pub use self::world::{Model, WorldRenderer, ChunkVertex};
+pub use self::world::{Model, WorldRenderer};

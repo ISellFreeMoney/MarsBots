@@ -337,7 +337,7 @@ pub fn open_window(mut settings: Settings, initial_state: StateFactory) -> ! {
                     }
                 }
             }
-            RedrawRequested() => (), // TODO: handle this
+            // TODO: handle this
             LoopDestroyed => {
                 // TODO: cleanup relevant stuff
             }

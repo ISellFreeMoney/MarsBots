@@ -334,7 +334,7 @@ impl State for SinglePlayer {
         Ok((StateTransition::KeepCurrent, encoder.finish()))
     }
 
-    fn handle_mouse_motion(&mut self, _settings: &Settings, delta: (f64, f64)) {
+    fn handle_mouse_motion(&mut self, _settings: Settings, delta: (f64, f64)) {
         if self.ui.should_update_camera() {
             self.yaw_pitch.update_cursor(delta.0, delta.1);
         }
@@ -390,7 +390,7 @@ impl State for SinglePlayer {
         self.ui.handle_mouse_state_changes(changes);
     }
 
-    fn handle_key_state_changes(&mut self, changes: Vec<(u32, winit::event::ElementState)>) {
+    fn handle_key_state_changes(&mut self, changes: Vec<(std::option::Option<u32>, winit::event::ElementState)>) {
         self.ui.handle_key_state_changes(changes);
     }
 }

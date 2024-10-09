@@ -6,6 +6,7 @@ use super::init::{load_glsl_shader, ShaderStage};
 use crate::ui::PrimitiveBuffer;
 use crate::window::{WindowBuffers, WindowData};
 use std::collections::{BTreeMap, HashMap};
+use wgpu::{Label, ShaderSource};
 use wgpu_glyph::ab_glyph::FontVec;
 use wgpu_glyph::FontId;
 
@@ -86,9 +87,17 @@ impl<'a> UiRenderer {
 
         // Create shader modules
         let vertex_shader_bytes = load_glsl_shader(ShaderStage::Vertex, "assets/shaders/gui-rect.vert");
-        let vertex_shader = wgpu::util::make_spirv(&vertex_shader_bytes);
+        // let vertex_shader = wgpu::util::make_spirv(&vertex_shader_bytes);
+        let vertex_shader = wgpu::ShaderModuleDescriptor {
+            label: Label::default(),
+            source: ShaderSource::Wgsl(vertex_shader_bytes.into()),
+        };
+
         let fragment_shader_bytes = load_glsl_shader(ShaderStage::Fragment, "assets/shaders/gui-rect.frag");
-        let fragment_shader = wgpu::util::make_spirv(&fragment_shader_bytes);
+        let fragment_shader = wgpu::ShaderModuleDescriptor {
+            label: Label::default(),
+            source: ShaderSource::Wgsl(fragment_shader_bytes.into()),
+        };
 
         log::trace!("Creating pipeline.");
 

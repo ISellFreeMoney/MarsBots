@@ -341,9 +341,9 @@ pub fn greedy_meshing(
             let delta0 = D_DELTA0.get(s);
             let delta1 = D_DELTA1.get(s);
             let delta2 = D_DELTA2.get(s);
-            let x = i * *delta0.get_unchecked(0) + j * *delta1.get_unchecked(0) + k * *delta2.get_unchecked(0);
-            let y = i * *delta0.get_unchecked(1) + j * *delta1.get_unchecked(1) + k * *delta2.get_unchecked(1);
-            let z = i * *delta0.get_unchecked(2) + j * *delta1.get_unchecked(2) + k * *delta2.get_unchecked(2);
+            let x = i * *delta0.expect("REASON").get_unchecked(0) + j * *delta1.get_unchecked(0) + k * *delta2.get_unchecked(0);
+            let y = i * *delta0.expect("REASON").get_unchecked(1) + j * *delta1.get_unchecked(1) + k * *delta2.get_unchecked(1);
+            let z = i * *delta0.expect("REASON").get_unchecked(2) + j * *delta1.get_unchecked(2) + k * *delta2.get_unchecked(2);
             (x, y, z)
         };
 

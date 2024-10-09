@@ -7,6 +7,7 @@ use std::collections::BTreeMap;
 use common::debug::DebugInfo;
 use wgpu_glyph::ab_glyph::PxScale;
 use winit::dpi::LogicalPosition;
+use winit::event::{ElementState, MouseButton};
 
 //pub mod rewrite;
 pub mod widgets;
@@ -180,10 +181,10 @@ impl Ui {
         self.messages.extend(self.ui.update(changes));
     }
 
-    pub fn handle_key_state_changes(&mut self, changes: Vec<(u32, winit::event::ElementState)>) {
+    pub fn handle_key_state_changes(&mut self, changes: Vec<(Option<u32>, ElementState)>) {
         for (key, state) in changes.into_iter() {
             // Escape key
-            if key == 1 {
+            if key == Some(1) {
                 if let winit::event::ElementState::Pressed = state {
                     self.show_menu = !self.show_menu;
                 }
@@ -216,6 +217,8 @@ pub fn quint_mouse_button(button: winit::event::MouseButton) -> quint::MouseButt
         Right => quint::MouseButton::Right,
         Middle => quint::MouseButton::Middle,
         Other(x) => quint::MouseButton::Other(x),
+        Back => quint::MouseButton::Back,
+        Forward => quint::MouseButton::Forward,
     }
 }
 

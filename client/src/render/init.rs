@@ -1,7 +1,7 @@
 //! Helpers for pipeline creation and initialization
 use std::path::Path;
 use wgpu::{FragmentState, VertexState};
-use wgpu_types::{BlendComponent, BlendFactor, BlendOperation, BlendState};
+use wgpu_types::{BlendComponent, BlendFactor, BlendOperation, BlendState, DepthBiasState};
 
 /// Shader stage
 pub enum ShaderStage {
@@ -50,12 +50,13 @@ pub const DEFAULT_COLOR_STATE_DESCRIPTOR: [wgpu::ColorTargetState; 1] =
         format: crate::window::COLOR_FORMAT,
 
         write_mask: wgpu::ColorWrites::ALL,
-        blend: Option::from(BlendState {
+        blend: Some(BlendState {
             alpha: BlendComponent {
                 src_factor: BlendFactor::One,
                 dst_factor: BlendFactor::OneMinusSrcAlpha,
                 operation: BlendOperation::Add,
-        }, color: BlendComponent {
+            },
+            color: BlendComponent {
                 src_factor: BlendFactor::SrcAlpha,
                 dst_factor: BlendFactor::OneMinusSrcAlpha,
                 operation: BlendOperation::Add,
@@ -75,7 +76,11 @@ pub const DEFAULT_DEPTH_STENCIL_STATE_DESCRIPTOR: wgpu::DepthStencilState =
             read_mask: 0,
             write_mask: 0,
         },
-        bias: Default::default(),
+        bias: DepthBiasState {
+            constant: 0,
+            slope_scale: 0.0,
+            clamp: 0.0,
+        },
     };
 
 /// Create a default pipeline

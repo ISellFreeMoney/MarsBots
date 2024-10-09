@@ -100,7 +100,7 @@ pub fn clear_color_and_depth(encoder: &mut wgpu::CommandEncoder, buffers: Window
         timestamp_writes: None,
         occlusion_query_set: None,
     });
-
+}
 /// Clear the depth buffer
 pub fn clear_depth(encoder: &mut wgpu::CommandEncoder, buffers: WindowBuffers) {
     let _rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -125,4 +125,4 @@ pub fn buffer_from_slice(device: &wgpu::Device, usage: wgpu::BufferUsages, data:
         contents: &data
     })
 }
-}
+

@@ -12,6 +12,8 @@ pub enum MouseButton {
     Right,
     Middle,
     Other(u16),
+    Back,
+    Forward,
 }
 
 /// A Ui event.
